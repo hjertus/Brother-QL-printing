@@ -2,3 +2,4 @@ brother-ql-inventree
 numpy
 Flask
 pdf2image
+opencv-python

@@ -13,10 +13,17 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender1 \
+    poppler-utils \
+    libusb-1.0-0 \
+    libusb-1.0-0-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Add Poppler to the PATH
+ENV PATH="${PATH}:/usr/bin"
 
 # Install Python dependencies
 RUN pip install -r requirements.txt
+RUN pip install pyusb
 
 # Expose port 5000
 EXPOSE 5000
