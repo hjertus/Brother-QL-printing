@@ -11,6 +11,33 @@ import os
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
+def printing(images):
+    # Setting Printer Specifications
+    backend = 'pyusb'
+    model = 'QL-1100'
+    printer = 'usb://0x04F9:0x20A7/000/001'
+
+    # Initialize BrotherQLRaster with the specified model
+    qlr = BrotherQLRaster(model)
+    qlr.exception_on_warning = True
+
+    # Converting print instructions for the Brother printer
+    instructions = convert(
+        qlr=qlr,
+        images=images,  # Pass the list of stretched images
+        label='103x164',  # Use the appropriate label size
+        rotate='0',  # 'Auto', '0', '90', '270'
+        threshold=70.0,  # Black and white threshold in percent.
+        dither=False,
+        compress=False,
+        dpi_600=False,
+        hq=True,  # False for low quality.
+        cut=True
+    )
+
+    # Send the instructions to the printer
+    send(instructions=instructions, printer_identifier=printer, backend_identifier=backend, blocking=True)
+
 @app.route('/', methods=['GET', 'POST'])
 def upload_pdf():
     if request.method == 'POST':
@@ -29,12 +56,11 @@ def upload_pdf():
             pdf_path = os.path.join(temp_dir, 'input.pdf')
             pdf_file.save(pdf_path)
 
-            images = []  # Initialize an empty list to store stretched images
-
             # Convert PDF pages to images
             pdf_images = convert_from_bytes(open(pdf_path, 'rb').read())
 
             for i, pdf_image in enumerate(pdf_images):
+                images = []  # Initialize an empty list to store stretched images
                 # Save each page as an image
                 img_path = os.path.join(temp_dir, f'receipt_{i}.jpg')
                 pdf_image.save(img_path, 'JPEG')
@@ -60,32 +86,7 @@ def upload_pdf():
 
                 # Append the stretched image to the list
                 images.append(Image.fromarray(stretched_image))
-
-            # Setting Printer Specifications
-            backend = 'pyusb'
-            model = 'QL-1100'
-            printer = 'usb://0x04F9:0x20A7/000/001'
-
-            # Initialize BrotherQLRaster with the specified model
-            qlr = BrotherQLRaster(model)
-            qlr.exception_on_warning = True
-
-            # Converting print instructions for the Brother printer
-            instructions = convert(
-                qlr=qlr,
-                images=images,  # Pass the list of stretched images
-                label='103x164',  # Use the appropriate label size
-                rotate='0',  # 'Auto', '0', '90', '270'
-                threshold=70.0,  # Black and white threshold in percent.
-                dither=False,
-                compress=False,
-                dpi_600=False,
-                hq=True,  # False for low quality.
-                cut=True
-            )
-
-            # Send the instructions to the printer
-            send(instructions=instructions, printer_identifier=printer, backend_identifier=backend, blocking=True)
+                printing(images)
 
             # Redirect back to the first page with an empty file input field
             return redirect(url_for('upload_pdf'))
