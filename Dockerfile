@@ -1,10 +1,12 @@
+# Use an official Python runtime as a base image
 FROM python:3
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the local code to the container
-COPY . .
+# Copy only the necessary files
+COPY src/ src/
+COPY requirements.txt .
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -22,11 +24,10 @@ RUN apt-get update && apt-get install -y \
 ENV PATH="${PATH}:/usr/bin"
 
 # Install Python dependencies
-RUN pip install -r requirements.txt
-RUN pip install pyusb
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port 5000
-EXPOSE 5000
+# Expose port 5000 (only if your application needs it)
+# EXPOSE 5000
 
 # Set the entry point
 CMD ["python", "src/printing_shit.py"]
